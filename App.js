@@ -1,23 +1,48 @@
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React from "react";
+import {
+  StyleSheet,
+  Text,
+  View,
+  Image,
+  TextInput,
+  TouchableHighlight
+} from "react-native";
+import { ApolloClient, createNetworkInterface } from "apollo-client";
+import { ApolloProvider } from "react-apollo";
+import { StackNavigator } from "react-navigation";
+import Config from "./config";
 
-export default class App extends React.Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-        <Text>Changes you make will automatically reload.</Text>
-        <Text>Shake your phone to open the developer menu.</Text>
-      </View>
-    );
-  }
-}
+import UserDetails from "./src/UserDetails";
+import Home from "./src/Home";
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+const RootStack = StackNavigator(
+  {
+    Home: { screen: Home },
+    UserDetails: { screen: UserDetails }
   },
+  { initialRouteName: "Home" }
+);
+
+const networkInterface = createNetworkInterface({
+  uri: "https://api.github.com/graphql"
 });
+networkInterface.use([
+  {
+    applyMiddleware(req, next) {
+      if (!req.options.headers) {
+        req.options.headers = {};
+      }
+      req.options.headers.authorization = `Bearer ${Config.GITHUB_TOKEN}`;
+      next();
+    }
+  }
+]);
+const client = new ApolloClient({
+  networkInterface
+});
+
+export default (ApolloApp = () => (
+  <ApolloProvider client={client}>
+    <RootStack />
+  </ApolloProvider>
+));
